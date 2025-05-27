@@ -6,7 +6,15 @@ import java.com.growwithme.crops.interfaces.rest.resources.CreateCropResource;
 public class CreateCropCommandFromResourceAssembler {
     public static CreateCropCommand toCommandFromResource(CreateCropResource resource) {
         return new CreateCropCommand(
-                resource.name()
+                resource.name(),
+                resource.code(),
+                resource.category(),
+                resource.area(),
+                resource.location(),
+                resource.status(),
+                resource.cost(),
+                resource.profitReturn(),
+                resource.profileId()
         );
     }
 }

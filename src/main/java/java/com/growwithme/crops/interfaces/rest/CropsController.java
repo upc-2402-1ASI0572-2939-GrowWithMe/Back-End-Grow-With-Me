@@ -14,8 +14,10 @@ import java.com.growwithme.crops.domain.services.CropCommandService;
 import java.com.growwithme.crops.domain.services.CropQueryService;
 import java.com.growwithme.crops.interfaces.rest.resources.CreateCropResource;
 import java.com.growwithme.crops.interfaces.rest.resources.CropResource;
+import java.com.growwithme.crops.interfaces.rest.resources.UpdateCropResource;
 import java.com.growwithme.crops.interfaces.rest.transform.CreateCropCommandFromResourceAssembler;
 import java.com.growwithme.crops.interfaces.rest.transform.CropResourceFromEntityAssembler;
+import java.com.growwithme.crops.interfaces.rest.transform.UpdateCropCommandFromResourceAssembler;
 import java.util.List;
 
 @AllArgsConstructor
@@ -40,6 +42,15 @@ public class CropsController {
         var deleteCropCommand = new DeleteCropCommand(id);
         cropCommandService.handle(deleteCropCommand);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<CropResource> updateCrop(@PathVariable Long id, @RequestBody UpdateCropResource resource) {
+        var updateCropCommand = UpdateCropCommandFromResourceAssembler.toCommandFromResource(id, resource);
+        var updatedCrop = cropCommandService.handle(updateCropCommand);
+        if (updatedCrop.isEmpty()) { return ResponseEntity.badRequest().build(); }
+        var cropResource = CropResourceFromEntityAssembler.toResourceFromEntity(updatedCrop.get());
+        return ResponseEntity.ok(cropResource);
     }
 
     @GetMapping("/{id}")
