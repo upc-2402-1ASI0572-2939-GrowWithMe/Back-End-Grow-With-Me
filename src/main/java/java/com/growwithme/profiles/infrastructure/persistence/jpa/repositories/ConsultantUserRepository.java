@@ -5,4 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.com.growwithme.profiles.domain.model.aggregates.ConsultantUser;
 
 public interface ConsultantUserRepository extends JpaRepository<ConsultantUser, Long> {
+    boolean existsConsultantUserByDni(String dni);
+
+    boolean existsConsultantUserByPhone(String phone);
 }

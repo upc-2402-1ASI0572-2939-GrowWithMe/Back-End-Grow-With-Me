@@ -1,50 +1,46 @@
 package java.com.growwithme.profiles.domain.model.aggregates;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.com.growwithme.profiles.domain.model.commands.farmer.CreateFarmerUserCommand;
-import java.com.growwithme.profiles.domain.model.valueobjects.EmailAddress;
-import java.com.growwithme.profiles.domain.model.valueobjects.PersonName;
+import java.com.growwithme.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 
 @Entity
 @Getter
 @Setter
-public class FarmerUser {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class FarmerUser extends AuditableAbstractAggregateRoot<FarmerUser> {
+    @NotNull
+    private String firstName;
 
-    @Embedded
-    private PersonName name;
+    @NotNull
+    private String lastName;
 
-    @Embedded
-    private EmailAddress email;
+    @Email
+    @NotNull
+    private String email;
 
+    @NotNull
     private String phone;
 
+    @NotNull
+    private String photoUrl;
+
+    @NotNull
     private String dni;
 
-    public FarmerUser(String firstName, String lastName, String email, String phone, String dni) {
-        this.name = new PersonName(firstName, lastName);
-        this.email = new EmailAddress(email);
+    public FarmerUser(String firstName, String lastName, String email, String phone, String photoUrl, String dni) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
         this.phone = phone;
+        this.photoUrl = photoUrl;
         this.dni = dni;
     }
 
-    public FarmerUser(CreateFarmerUserCommand command) {
-        this.name = new PersonName(command.firstName(), command.lastName());
-        this.email = new EmailAddress(command.email());
-        this.phone = command.phone();
-        this.dni = command.dni();
-    }
-
     public String getFullName() {
-        return name.getFullName();
-    }
-
-    public String getEmail() {
-        return email.email();
+        return firstName + " " + lastName;
     }
 }

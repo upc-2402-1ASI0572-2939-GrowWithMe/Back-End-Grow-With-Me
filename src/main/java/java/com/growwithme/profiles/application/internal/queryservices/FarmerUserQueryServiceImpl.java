@@ -1,4 +1,4 @@
-package java.com.growwithme.profiles.application.queryservices;
+package java.com.growwithme.profiles.application.internal.queryservices;
 
 import org.springframework.stereotype.Service;
 
