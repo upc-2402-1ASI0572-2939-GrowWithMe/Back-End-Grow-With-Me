@@ -7,7 +7,14 @@ public class CropResourceFromEntityAssembler {
     public static CropResource toResourceFromEntity(Crop entity) {
         return new CropResource(
                 entity.getId(),
-                entity.getName()
+                entity.getFarmerUser().getId(),
+                entity.getProductName(),
+                entity.getCode(),
+                entity.getCategory(),
+                entity.getStatus(),
+                entity.getArea(),
+                entity.getLocation(),
+                entity.getCost()
         );
     }
 }

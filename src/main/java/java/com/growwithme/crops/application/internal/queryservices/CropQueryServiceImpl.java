@@ -1,8 +1,9 @@
-package java.com.growwithme.crops.application.queryservices;
+package java.com.growwithme.crops.application.internal.queryservices;
 
 import org.springframework.stereotype.Service;
 
 import java.com.growwithme.crops.domain.model.aggregates.Crop;
+import java.com.growwithme.crops.domain.model.queries.GetAllCropsByFarmerIdQuery;
 import java.com.growwithme.crops.domain.model.queries.GetAllCropsQuery;
 import java.com.growwithme.crops.domain.model.queries.GetCropByIdQuery;
 import java.com.growwithme.crops.domain.services.CropQueryService;
@@ -21,6 +22,11 @@ public class CropQueryServiceImpl implements CropQueryService {
     @Override
     public List<Crop> handle(GetAllCropsQuery query) {
         return repository.findAll();
+    }
+
+    @Override
+    public List<Crop> handle(GetAllCropsByFarmerIdQuery query) {
+        return repository.findAllByFarmerUser_Id(query.farmerId());
     }
 
     @Override

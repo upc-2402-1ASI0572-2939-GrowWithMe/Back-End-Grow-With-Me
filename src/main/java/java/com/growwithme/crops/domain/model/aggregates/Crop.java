@@ -1,11 +1,14 @@
 package java.com.growwithme.crops.domain.model.aggregates;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.com.growwithme.crops.domain.model.commands.CreateCropCommand;
+import java.com.growwithme.crops.domain.model.valueobjects.CropCategory;
 import java.com.growwithme.crops.domain.model.valueobjects.CropStatus;
+import java.com.growwithme.profiles.domain.model.aggregates.FarmerUser;
 import java.com.growwithme.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import java.util.List;
 
@@ -13,74 +16,85 @@ import java.util.List;
 @Getter
 @Setter
 public class Crop extends AuditableAbstractAggregateRoot<Crop> {
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
-    private Long id;
+    @ManyToOne
+    @JoinColumn(name = "farmer_id", nullable = false)
+    @NotNull
+    private FarmerUser farmerUser;
 
-    private String name;
+    @ElementCollection
+    @CollectionTable(name = "crop_activities", joinColumns = @JoinColumn(name = "crop_id"))
+    @Column(name = "crop_activities")
+    private List<CropActivity> activities;
+
+    @NotNull
+    private String productName;
+
+    @NotNull
+    private String code;
 
     @Embedded
     @Enumerated(EnumType.STRING)
+    private CropCategory category;
+
+    @Embedded
+    @Enumerated(EnumType.STRING)
+    @NotNull
     private CropStatus status;
 
-    @ElementCollection
-    @CollectionTable(name = "crop_temperature", joinColumns = @JoinColumn(name = "crop_id"))
-    @Column(name = "temperature")
-    private List<String> temperature;
+    @NotNull
+    private Float area;
+
+    @NotNull
+    private String location;
+
+    @NotNull
+    private Float cost;
 
     @ElementCollection
-    @CollectionTable(name = "crop_humidity", joinColumns = @JoinColumn(name = "crop_id"))
-    @Column(name = "humidity")
-    private List<String> humidity;
+    @CollectionTable(name = "temperature_list", joinColumns = @JoinColumn(name = "crop_id"))
+    @Column(name = "temperature_list")
+    private List<Float> temperatureList;
+
+    @ElementCollection
+    @CollectionTable(name = "humidity_list", joinColumns = @JoinColumn(name = "crop_id"))
+    @Column(name = "humidity_list")
+    private List<Float> humidityList;
 
     public Crop() {}
 
-    public Crop(String name) {
-        this.name = name;
+    public Crop(FarmerUser farmerUser, String productName, String code, CropCategory category, Float area, String location, Float cost) {
+        this.farmerUser = farmerUser;
+        this.productName = productName;
+        this.code = code;
+        this.category = category;
         this.status = CropStatus.EMPTY;
-    }
-
-    public Crop(CreateCropCommand command) {
-        this.name = command.name();
-        this.status = CropStatus.EMPTY;
+        this.area = area;
+        this.location = location;
+        this.cost = cost;
+        this.activities = List.of();
+        this.temperatureList = List.of();
+        this.humidityList = List.of();
     }
 
     public String getCropStatus() {
         return status.name();
     }
 
-    public void toPlantedFromEmpty() {
-        if (this.status != CropStatus.EMPTY) {
-            throw new IllegalStateException("The crop must be in EMPTY state to change to PLANTED.");
+    public void addActivityToList(CropActivity activity) {
+        if (activity != null) {
+            this.activities.add(activity);
         }
-        this.status = CropStatus.PLANTED;
     }
 
-    public void toGrowingFromPlanted() {
-        if (this.status != CropStatus.PLANTED) {
-            throw new IllegalStateException("The crop must be in PLANTED state to change to GROWING.");
+    public void addTemperatureToList(Float temperature) {
+        if (temperature != null) {
+            this.temperatureList.add(temperature);
         }
-        this.status = CropStatus.GROWING;
     }
 
-    public void toReadyToHarvestFromGrowing() {
-        if (this.status != CropStatus.GROWING) {
-            throw new IllegalStateException("The crop must be in GROWING state to change to READY_TO_HARVEST.");
+    public void addHumidityToList(Float humidity) {
+        if (humidity != null) {
+            this.humidityList.add(humidity);
         }
-        this.status = CropStatus.READY_TO_HARVEST;
-    }
-
-    public void toHarvestedFromReadyToHarvest() {
-        if (this.status != CropStatus.READY_TO_HARVEST) {
-            throw new IllegalStateException("The crop must be in READY_TO_HARVEST state to change to HARVESTED.");
-        }
-        this.status = CropStatus.HARVESTED;
-    }
-
-    public void toEmptyFromHarvested() {
-        if (this.status != CropStatus.HARVESTED) {
-            throw new IllegalStateException("The crop must be in HARVESTED state to change to EMPTY.");
-        }
-        this.status = CropStatus.EMPTY;
     }
 }

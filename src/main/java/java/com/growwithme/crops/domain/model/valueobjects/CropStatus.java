@@ -4,15 +4,6 @@ public enum CropStatus {
     EMPTY,
     PLANTED,
     GROWING,
-    READY_TO_HARVEST,
+    READY,
     HARVESTED;
-
-    public static CropStatus fromString(String status) {
-        for (CropStatus cropStatus : CropStatus.values()) {
-            if (cropStatus.name().equalsIgnoreCase(status)) {
-                return cropStatus;
-            }
-        }
-        throw new IllegalArgumentException("Unknown status: " + status);
-    }
 }
