@@ -10,13 +10,18 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.com.growwithme.crops.domain.model.commands.DeleteAllCropActivitiesByCropIdCommand;
 import java.com.growwithme.crops.domain.model.commands.DeleteCropActivityCommand;
+import java.com.growwithme.crops.domain.model.queries.GetAllCropActivitiesByCropIdQuery;
 import java.com.growwithme.crops.domain.services.CropActivityCommandService;
 import java.com.growwithme.crops.domain.services.CropActivityQueryService;
 import java.com.growwithme.crops.interfaces.rest.resources.CreateCropActivityResource;
 import java.com.growwithme.crops.interfaces.rest.resources.CropActivityResource;
+import java.com.growwithme.crops.interfaces.rest.resources.UpdateCropActivityResource;
 import java.com.growwithme.crops.interfaces.rest.transform.CreateCropActivityCommandFromResourceAssembler;
 import java.com.growwithme.crops.interfaces.rest.transform.CropActivityResourceFromEntityAssembler;
+import java.com.growwithme.crops.interfaces.rest.transform.UpdateCropActivityCommandFromResourceAssembler;
+import java.util.List;
 
 @AllArgsConstructor
 @CrossOrigin(origins = "*", methods = { RequestMethod.POST, RequestMethod.GET, RequestMethod.PUT, RequestMethod.DELETE })
@@ -56,5 +61,50 @@ public class CropActivitiesController {
         return ResponseEntity.ok("Crop activity deleted successfully");
     }
 
-    
+    @Operation(summary = "Delete all crop activities by crop ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All crop activities deleted successfully"),
+            @ApiResponse(responseCode = "404", description = "Crop activities not found for the given crop ID")
+    })
+    @DeleteMapping("/crops/{cropId}")
+    public ResponseEntity<?> deleteAllCropActivitiesByCropId(@PathVariable Long cropId) {
+        var deleteCropActivitiesCommand = new DeleteAllCropActivitiesByCropIdCommand(cropId);
+        commandService.handle(deleteCropActivitiesCommand);
+        return ResponseEntity.ok("All crop activities deleted successfully");
+    }
+
+    @Operation(summary = "Update a crop activity by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Crop activity updated successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid input data"),
+            @ApiResponse(responseCode = "404", description = "Crop activity not found")
+    })
+    @PutMapping("/{id}")
+    public ResponseEntity<CropActivityResource> updateCropActivity(@PathVariable Long id, @RequestBody UpdateCropActivityResource resource) {
+        var updateCropActivityCommand = UpdateCropActivityCommandFromResourceAssembler.toCommandFromResource(id, resource);
+        var updatedCropActivity = commandService.handle(updateCropActivityCommand);
+        if (updatedCropActivity.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+        var cropActivityResource = CropActivityResourceFromEntityAssembler.toResourceFromEntity(updatedCropActivity.get());
+        return ResponseEntity.ok(cropActivityResource);
+    }
+
+    @Operation(summary = "Get all crop activities by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Crop activities retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Crop activities not found")
+    })
+    @GetMapping("/crops/{cropId}")
+    public ResponseEntity<List<CropActivityResource>> getAllCropActivitiesByCropId(@PathVariable Long cropId) {
+        var query = new GetAllCropActivitiesByCropIdQuery(cropId);
+        var cropActivities = queryService.handle(query);
+        if (cropActivities.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        var cropActivityResources = cropActivities.stream()
+                .map(CropActivityResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
+        return ResponseEntity.ok(cropActivityResources);
+    }
 }

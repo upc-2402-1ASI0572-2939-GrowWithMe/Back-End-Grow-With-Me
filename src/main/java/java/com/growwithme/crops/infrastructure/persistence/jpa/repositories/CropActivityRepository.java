@@ -14,4 +14,6 @@ public interface CropActivityRepository extends JpaRepository<CropActivity, Long
     void deleteAllByCrop_Id(Long cropId);
 
     boolean existsCropActivityByCrop_IdAndActivityDate(Long id, Date date);
+
+    boolean existsCropActivityByIdAndCrop_Id(Long id, Long cropId);
 }

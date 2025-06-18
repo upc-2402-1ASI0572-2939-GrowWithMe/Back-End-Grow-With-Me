@@ -76,23 +76,32 @@ public class CropActivityCommandServiceImpl implements CropActivityCommandServic
     @Override
     public Optional<CropActivity> handle(UpdateCropActivityCommand command) {
         var cropActivityResult = cropActivityRepository.findById(command.id());
+        var cropResult = cropRepository.findById(command.cropId());
 
         if (cropActivityResult.isEmpty()) {
             throw new IllegalArgumentException("Crop activity not found with ID: " + command.id());
         }
 
+        if (cropResult.isEmpty()) {
+            throw new IllegalArgumentException("Crop with ID " + command.cropId() + " does not exist.");
+        }
+
         var cropActivity = cropActivityResult.get();
 
+        var existingCropActivity = cropActivityRepository.existsCropActivityByIdAndCrop_Id(command.id(), cropResult.get().getId());
+        var existingCropActivityWithSameDate = cropActivityRepository.existsCropActivityByCrop_IdAndActivityDate(cropActivity.getCrop().getId(), command.activityDate());
+
+        if (existingCropActivity) {
+            throw new IllegalArgumentException("Crop activity does not belong to the specified crop.");
+        }
+        if (existingCropActivityWithSameDate) {
+            throw new IllegalArgumentException("Crop activity with the same date already exists for this crop.");
+        }
+
+        cropActivity.setActivityDate(command.activityDate());
+        cropActivity.setDescription(command.description());
+
         try {
-            var existingCropActivityWithSameDate = cropActivityRepository.existsCropActivityByCrop_IdAndActivityDate(cropActivity.getCrop().getId(), command.activityDate());
-
-            if (existingCropActivityWithSameDate) {
-                throw new IllegalArgumentException("Crop activity with the same date already exists for this crop.");
-            }
-
-            cropActivity.setActivityDate(command.activityDate());
-            cropActivity.setDescription(command.description());
-
             var savedCropActivity = cropActivityRepository.save(cropActivity);
             return Optional.of(savedCropActivity);
         } catch (Exception e) {

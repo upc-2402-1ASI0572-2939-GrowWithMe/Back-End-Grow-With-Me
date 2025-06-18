@@ -113,7 +113,7 @@ public class CropsController {
             @ApiResponse(responseCode = "200", description = "Crops found for the farmer"),
             @ApiResponse(responseCode = "404", description = "No crops found for the farmer")
     })
-    @GetMapping("/farmer/{farmerId}")
+    @GetMapping("/farmers/{farmerId}")
     public ResponseEntity<List<CropResource>> getAllCropsByFarmerId(@PathVariable Long farmerId) {
         var getAllCropsQuery = new GetAllCropsByFarmerIdQuery(farmerId);
         var crops = cropQueryService.handle(getAllCropsQuery);

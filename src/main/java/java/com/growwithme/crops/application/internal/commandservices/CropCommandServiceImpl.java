@@ -58,33 +58,38 @@ public class CropCommandServiceImpl implements CropCommandService {
     @Override
     public Optional<Crop> handle(UpdateCropCommand command) {
         var cropResult = cropRepository.findById(command.id());
+        var farmerUserResult = externalFarmerUserService.fetchFarmerUserById(command.farmerId());
 
         if (cropResult.isEmpty()) {
             throw new IllegalArgumentException("Crop not found with ID: " + command.id());
         }
 
+        if (farmerUserResult == null) {
+            throw new IllegalArgumentException("Farmer user not found with ID: " + command.farmerId());
+        }
+
         var crop = cropResult.get();
 
+        var existingCrop = cropRepository.existsCropByIdAndFarmerUser_Id(command.id(), command.farmerId());
+
+        if (existingCrop) {
+            throw new IllegalArgumentException("Crop with the same product name and code already exists.");
+        }
+
+        var existingCropByLocation = cropRepository.existsCropByLocation(crop.getLocation());
+
+        if (existingCropByLocation) {
+            throw new IllegalArgumentException("Crop with the same location already exists.");
+        }
+
+        crop.setProductName(command.productName());
+        crop.setCode(command.code());
+        crop.setCategory(command.category());
+        crop.setArea(command.area());
+        crop.setLocation(command.location());
+        crop.setCost(command.cost());
+
         try {
-            var existingCrop = cropRepository.existsCropByProductNameAndCode(crop.getProductName(), crop.getCode());
-
-            if (existingCrop) {
-                throw new IllegalArgumentException("Crop with the same product name and code already exists.");
-            }
-
-            var existingCropByLocation = cropRepository.existsCropByLocation(crop.getLocation());
-
-            if (existingCropByLocation) {
-                throw new IllegalArgumentException("Crop with the same location already exists.");
-            }
-
-            crop.setProductName(command.productName());
-            crop.setCode(command.code());
-            crop.setCategory(command.category());
-            crop.setArea(command.area());
-            crop.setLocation(command.location());
-            crop.setCost(command.cost());
-
             var savedCrop = cropRepository.save(crop);
             return Optional.of(savedCrop);
         } catch (Exception e) {

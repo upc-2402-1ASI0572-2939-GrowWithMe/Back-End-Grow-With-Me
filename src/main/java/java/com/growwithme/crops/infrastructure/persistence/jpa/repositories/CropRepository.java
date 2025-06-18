@@ -8,9 +8,9 @@ import java.util.List;
 
 @Repository
 public interface CropRepository extends JpaRepository<Crop, Long> {
-    boolean existsCropByProductNameAndCode(String productName, String code);
-
     boolean existsCropByLocation(String location);
 
     List<Crop> findAllByFarmerUser_Id(Long farmerUserId);
+
+    boolean existsCropByIdAndFarmerUser_Id(Long id, Long farmerUserId);
 }
