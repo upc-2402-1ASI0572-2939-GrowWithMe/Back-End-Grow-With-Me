@@ -74,16 +74,16 @@ public class FarmerUserCommandServiceImpl implements FarmerUserCommandService {
             throw new IllegalArgumentException("Farmer user not found with ID: " + command.id());
         }
 
+        var existingFarmerUser = farmerUserRepository.existsFarmerUserByPhone(farmerUser.getPhone());
+
+        if (existingFarmerUser) {
+            throw new IllegalArgumentException("Farmer user with the same phone number already exists.");
+        }
+
+        farmerUser.setPhone(command.phone());
+        farmerUser.setPhotoUrl(command.photoUrl());
+
         try {
-            var existingFarmerUser = farmerUserRepository.existsFarmerUserByPhone(farmerUser.getPhone());
-
-            if (existingFarmerUser) {
-                throw new IllegalArgumentException("Farmer user with the same phone number already exists.");
-            }
-
-            farmerUser.setPhone(command.phone());
-            farmerUser.setPhotoUrl(command.photoUrl());
-
             var savedFarmerUser = farmerUserRepository.save(farmerUser);
             return Optional.of(savedFarmerUser);
         } catch (Exception e) {

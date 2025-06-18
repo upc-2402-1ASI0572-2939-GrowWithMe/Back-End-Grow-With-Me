@@ -74,16 +74,16 @@ public class ConsultantUserCommandServiceImpl implements ConsultantUserCommandSe
             throw new IllegalArgumentException("Consultant user not found with ID: " + command.id());
         }
 
+        var existingConsultantUser = consultantUserRepository.existsConsultantUserByPhone(command.phone());
+
+        if (existingConsultantUser) {
+            throw new IllegalArgumentException("Consultant user with the same phone number already exists.");
+        }
+
+        consultantUser.setPhone(command.phone());
+        consultantUser.setPhotoUrl(command.photoUrl());
+
         try {
-            var existingConsultantUser = consultantUserRepository.existsConsultantUserByPhone(command.phone());
-
-            if (existingConsultantUser) {
-                throw new IllegalArgumentException("Consultant user with the same phone number already exists.");
-            }
-
-            consultantUser.setPhone(command.phone());
-            consultantUser.setPhotoUrl(command.photoUrl());
-
             var savedConsultantUser = consultantUserRepository.save(consultantUser);
             return Optional.of(savedConsultantUser);
         } catch (Exception e) {
