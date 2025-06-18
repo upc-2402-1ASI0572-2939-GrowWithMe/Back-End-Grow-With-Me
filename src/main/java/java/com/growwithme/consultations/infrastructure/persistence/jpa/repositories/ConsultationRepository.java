@@ -9,4 +9,8 @@ import java.util.List;
 @Repository
 public interface ConsultationRepository extends JpaRepository<Consultation, Long> {
     List<Consultation> findAllByFarmerUser_Id(Long farmerId);
+
+    boolean existsConsultationByIdAndFarmerUser_Id(Long id, Long farmerId);
+
+    boolean findByTitleAndFarmerUser_Id(String title, Long farmerId);
 }
