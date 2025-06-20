@@ -1,5 +1,6 @@
 package com.growwithme.crops.interfaces.rest;
 
+import com.growwithme.crops.infrastructure.persistence.jpa.repositories.CropRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -33,7 +34,7 @@ import java.util.List;
 public class CropsController {
     private final CropCommandService cropCommandService;
     private final CropQueryService cropQueryService;
-    private final FarmerUserQueryService farmerUserQueryService;
+    private final CropRepository repository;
 
     @Operation(summary = "Create a new crop")
     @ApiResponses(value = {
@@ -125,4 +126,19 @@ public class CropsController {
                 .toList();
         return ResponseEntity.ok(cropResources);
     }
+
+    @GetMapping("/{id}/temperatures")
+    public ResponseEntity<List<Float>> getTemperatures(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(crop -> ResponseEntity.ok(crop.getTemperatureList()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/humidities")
+    public ResponseEntity<List<Float>> getHumidities(@PathVariable Long id) {
+        return repository.findById(id)
+                .map(crop -> ResponseEntity.ok(crop.getHumidityList()))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
 }

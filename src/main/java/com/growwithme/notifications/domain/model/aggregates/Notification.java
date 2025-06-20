@@ -30,4 +30,6 @@ public class Notification extends AuditableAbstractAggregateRoot<Notification> {
         this.title = title;
         this.message = message;
     }
+
+    public Notification() {}
 }

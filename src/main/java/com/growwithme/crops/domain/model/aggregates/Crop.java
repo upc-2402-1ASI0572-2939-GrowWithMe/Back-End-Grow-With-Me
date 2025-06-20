@@ -30,11 +30,9 @@ public class Crop extends AuditableAbstractAggregateRoot<Crop> {
     @NotNull
     private String code;
 
-    @Embedded
     @Enumerated(EnumType.STRING)
     private CropCategory category;
 
-    @Embedded
     @Enumerated(EnumType.STRING)
     @NotNull
     private CropStatus status;
@@ -50,15 +48,13 @@ public class Crop extends AuditableAbstractAggregateRoot<Crop> {
 
     @ElementCollection
     @CollectionTable(name = "temperature_list", joinColumns = @JoinColumn(name = "crop_id"))
-    @Column(name = "temperature_list")
+    @Column(name = "temperature")
     private List<Float> temperatureList;
 
     @ElementCollection
     @CollectionTable(name = "humidity_list", joinColumns = @JoinColumn(name = "crop_id"))
-    @Column(name = "humidity_list")
+    @Column(name = "humidity")
     private List<Float> humidityList;
-
-    public Crop() {}
 
     public Crop(FarmerUser farmerUser, String productName, String code, CropCategory category, Float area, String location, Float cost) {
         this.farmerUser = farmerUser;
@@ -73,6 +69,8 @@ public class Crop extends AuditableAbstractAggregateRoot<Crop> {
         this.temperatureList = List.of();
         this.humidityList = List.of();
     }
+
+    public Crop() {}
 
     public String getCropStatus() {
         return status.name();

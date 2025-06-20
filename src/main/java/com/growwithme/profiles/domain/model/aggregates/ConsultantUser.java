@@ -40,6 +40,8 @@ public class ConsultantUser extends AuditableAbstractAggregateRoot<ConsultantUse
         this.dni = dni;
     }
 
+    public ConsultantUser() {}
+
     public String getFullName() {
         return firstName + " " + lastName;
     }

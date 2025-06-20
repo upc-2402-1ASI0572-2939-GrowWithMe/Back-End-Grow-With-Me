@@ -29,4 +29,6 @@ public class CropActivity extends AuditableAbstractAggregateRoot<CropActivity> {
         this.activityDate = activityDate;
         this.description = description;
     }
+
+    public CropActivity() {}
 }

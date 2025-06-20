@@ -28,7 +28,7 @@ public class CropCommandServiceImpl implements CropCommandService {
             throw new IllegalArgumentException("Farmer user not found with ID: " + command.farmerId());
         }
 
-        var existingCrop = cropRepository.existsCropByProductNameAndCodeAndFarmerUser_Id(command.productName(), command.code(), farmerUserResult.getId());
+        var existingCrop = cropRepository.existsCropByProductNameAndCodeAndFarmerUser_IdNot(command.productName(), command.code(), farmerUserResult.getId());
 
         if (existingCrop) {
             throw new IllegalArgumentException("Crop with the same product name and code already exists for this farmer.");
@@ -78,13 +78,13 @@ public class CropCommandServiceImpl implements CropCommandService {
 
         var crop = cropResult.get();
 
-        var existingCrop = cropRepository.existsCropByIdAndFarmerUser_Id(command.id(), farmerUserResult.getId());
+        var existingCrop = cropRepository.existsCropByIdAndFarmerUser_IdNot(command.id(), farmerUserResult.getId());
 
         if (existingCrop) {
             throw new IllegalArgumentException("Crop with the same product name and code already exists.");
         }
 
-        var existingCropByLocation = cropRepository.existsCropByLocation(crop.getLocation());
+        var existingCropByLocation = cropRepository.existsCropByLocationNot(crop.getLocation());
 
         if (existingCropByLocation) {
             throw new IllegalArgumentException("Crop with the same location already exists.");

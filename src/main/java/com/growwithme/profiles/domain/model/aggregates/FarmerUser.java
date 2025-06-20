@@ -40,6 +40,8 @@ public class FarmerUser extends AuditableAbstractAggregateRoot<FarmerUser> {
         this.dni = dni;
     }
 
+    public FarmerUser() {}
+
     public String getFullName() {
         return firstName + " " + lastName;
     }

@@ -35,4 +35,6 @@ public class Consultation extends AuditableAbstractAggregateRoot<Consultation> {
         this.description = description;
         this.status = ConsultationStatus.PENDING;
     }
+
+    public Consultation() {}
 }
