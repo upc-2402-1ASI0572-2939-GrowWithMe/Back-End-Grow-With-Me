@@ -16,7 +16,7 @@ import java.util.Optional;
 @Service
 @AllArgsConstructor
 public class CropCommandServiceImpl implements CropCommandService {
-    private final CropRepository cropRepository;
+    private final CropRepository repository;
     private final ExternalFarmerUserService externalFarmerUserService;
 
 
@@ -28,7 +28,7 @@ public class CropCommandServiceImpl implements CropCommandService {
             throw new IllegalArgumentException("Farmer user not found with ID: " + command.farmerId());
         }
 
-        var existingCrop = cropRepository.existsCropByProductNameAndCodeAndFarmerUser_IdNot(command.productName(), command.code(), farmerUserResult.getId());
+        var existingCrop = repository.existsCropByProductNameAndCodeAndFarmerUser_IdNot(command.productName(), command.code(), farmerUserResult.getId());
 
         if (existingCrop) {
             throw new IllegalArgumentException("Crop with the same product name and code already exists for this farmer.");
@@ -45,7 +45,7 @@ public class CropCommandServiceImpl implements CropCommandService {
         );
 
         try {
-            var savedCrop = cropRepository.save(newCrop);
+            var savedCrop = repository.save(newCrop);
             return Optional.of(savedCrop);
         } catch (Exception e) {
             throw new IllegalArgumentException("Error creating crop: " + e.getMessage(), e);
@@ -55,13 +55,13 @@ public class CropCommandServiceImpl implements CropCommandService {
     @Override
     public void handle(DeleteCropCommand command) {
         try {
-            var cropResult = cropRepository.findById(command.id());
+            var cropResult = repository.findById(command.id());
 
             if (cropResult.isEmpty()) {
                 throw new IllegalArgumentException("Crop not found with ID: " + command.id());
             }
 
-            cropRepository.deleteById(command.id());
+            repository.deleteById(command.id());
         } catch (Exception e) {
             throw new IllegalArgumentException("Error deleting crop: " + e.getMessage(), e);
         }
@@ -69,8 +69,12 @@ public class CropCommandServiceImpl implements CropCommandService {
 
     @Override
     public Optional<Crop> handle(UpdateCropCommand command) {
-        var cropResult = cropRepository.findById(command.id());
+        var cropResult = repository.findById(command.id());
         var farmerUserResult = externalFarmerUserService.fetchFarmerUserById(cropResult.get().getFarmerUser().getId());
+
+        if (farmerUserResult == null) {
+            throw new IllegalArgumentException("Farmer user not found with ID: " + cropResult.get().getFarmerUser().getId());
+        }
 
         if (cropResult.isEmpty()) {
             throw new IllegalArgumentException("Crop not found with ID: " + command.id());
@@ -78,16 +82,10 @@ public class CropCommandServiceImpl implements CropCommandService {
 
         var crop = cropResult.get();
 
-        var existingCrop = cropRepository.existsCropByIdAndFarmerUser_IdNot(command.id(), farmerUserResult.getId());
+        var existingCrop = repository.existsCropByIdAndFarmerUser_IdNot(command.id(), farmerUserResult.getId());
 
         if (existingCrop) {
             throw new IllegalArgumentException("Crop with the same product name and code already exists.");
-        }
-
-        var existingCropByLocation = cropRepository.existsCropByLocationNot(crop.getLocation());
-
-        if (existingCropByLocation) {
-            throw new IllegalArgumentException("Crop with the same location already exists.");
         }
 
         crop.setProductName(command.productName());
@@ -98,7 +96,7 @@ public class CropCommandServiceImpl implements CropCommandService {
         crop.setCost(command.cost());
 
         try {
-            var savedCrop = cropRepository.save(crop);
+            var savedCrop = repository.save(crop);
             return Optional.of(savedCrop);
         } catch (Exception e) {
             throw new IllegalArgumentException("Error updating crop: " + e.getMessage(), e);

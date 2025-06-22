@@ -1,5 +1,6 @@
 package com.growwithme.crops.application.acl;
 
+import com.growwithme.crops.domain.model.queries.GetCropByIdQuery;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +14,7 @@ import com.growwithme.crops.domain.services.CropCommandService;
 import com.growwithme.crops.domain.services.CropQueryService;
 import com.growwithme.crops.interfaces.acl.CropContextFacade;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @AllArgsConstructor
@@ -35,5 +37,10 @@ public class CropContextFacadeImpl implements CropContextFacade {
     @Override
     public List<Crop> fetchAllCropsByFarmerId(Long farmerId) {
         return queryService.handle(new GetAllCropsByFarmerIdQuery(farmerId));
+    }
+
+    @Override
+    public Optional<Crop> fetchCropById(Long cropId) {
+        return queryService.handle(new GetCropByIdQuery(cropId));
     }
 }
