@@ -8,7 +8,6 @@ public record CreateCropResource(
         String productName,
         String code,
         CropCategory category,
-        CropStatus status,
         Float area,
         String location,
         Float cost

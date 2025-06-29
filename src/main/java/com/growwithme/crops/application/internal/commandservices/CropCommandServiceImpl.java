@@ -6,7 +6,7 @@ import com.growwithme.crops.domain.model.commands.UpdateCropCommand;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.growwithme.crops.application.internal.outboundservices.acl.ExternalFarmerUserService;
+import com.growwithme.crops.application.internal.outboundservices.acl.ExternalIamService;
 import com.growwithme.crops.domain.model.aggregates.Crop;
 
 import com.growwithme.crops.domain.services.CropCommandService;
@@ -17,25 +17,24 @@ import java.util.Optional;
 @AllArgsConstructor
 public class CropCommandServiceImpl implements CropCommandService {
     private final CropRepository repository;
-    private final ExternalFarmerUserService externalFarmerUserService;
-
+    private final ExternalIamService externalIamService;
 
     @Override
     public Optional<Crop> handle(CreateCropCommand command) {
-        var farmerUserResult = externalFarmerUserService.fetchFarmerUserById(command.farmerId());
+        var farmerUserResult = externalIamService.fetchFarmerUserById(command.farmerId());
 
-        if (farmerUserResult == null) {
+        if (farmerUserResult.isEmpty()) {
             throw new IllegalArgumentException("Farmer user not found with ID: " + command.farmerId());
         }
 
-        var existingCrop = repository.existsCropByProductNameAndCodeAndFarmerUser_IdNot(command.productName(), command.code(), farmerUserResult.getId());
+        var existingCrop = repository.existsCropByProductNameAndCodeAndFarmerUser_IdNot(command.productName(), command.code(), farmerUserResult.get().getId());
 
         if (existingCrop) {
             throw new IllegalArgumentException("Crop with the same product name and code already exists for this farmer.");
         }
 
         var newCrop = new Crop(
-                farmerUserResult,
+                farmerUserResult.get(),
                 command.productName(),
                 command.code(),
                 command.category(),
@@ -70,11 +69,6 @@ public class CropCommandServiceImpl implements CropCommandService {
     @Override
     public Optional<Crop> handle(UpdateCropCommand command) {
         var cropResult = repository.findById(command.id());
-        var farmerUserResult = externalFarmerUserService.fetchFarmerUserById(cropResult.get().getFarmerUser().getId());
-
-        if (farmerUserResult == null) {
-            throw new IllegalArgumentException("Farmer user not found with ID: " + cropResult.get().getFarmerUser().getId());
-        }
 
         if (cropResult.isEmpty()) {
             throw new IllegalArgumentException("Crop not found with ID: " + command.id());
@@ -82,7 +76,15 @@ public class CropCommandServiceImpl implements CropCommandService {
 
         var crop = cropResult.get();
 
-        var existingCrop = repository.existsCropByIdAndFarmerUser_IdNot(command.id(), farmerUserResult.getId());
+        var farmerUserResult = externalIamService.fetchFarmerUserById(crop.getFarmerUser().getId());
+
+        if (farmerUserResult.isEmpty()) {
+            throw new IllegalArgumentException("Farmer user not found with ID: " + crop.getFarmerUser().getId());
+        }
+
+        var farmerUser = farmerUserResult.get();
+
+        var existingCrop = repository.existsCropByIdAndFarmerUser_IdNot(command.id(), farmerUser.getId());
 
         if (existingCrop) {
             throw new IllegalArgumentException("Crop with the same product name and code already exists.");

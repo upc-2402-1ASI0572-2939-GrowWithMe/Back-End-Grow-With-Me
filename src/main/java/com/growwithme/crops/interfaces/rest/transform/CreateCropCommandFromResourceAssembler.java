@@ -10,7 +10,6 @@ public class CreateCropCommandFromResourceAssembler {
                 resource.productName(),
                 resource.code(),
                 resource.category(),
-                resource.status(),
                 resource.area(),
                 resource.location(),
                 resource.cost()

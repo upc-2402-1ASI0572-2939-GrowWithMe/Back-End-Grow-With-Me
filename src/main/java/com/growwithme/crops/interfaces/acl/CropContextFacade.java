@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface CropContextFacade {
-    Long createCrop(Long farmerId, String productName, String code, CropCategory category, CropStatus status, Float area, String location, Float cost);
+    Long createCrop(Long farmerId, String productName, String code, CropCategory category, Float area, String location, Float cost);
 
     List<Crop> fetchAllCropsByFarmerId(Long farmerId);
 

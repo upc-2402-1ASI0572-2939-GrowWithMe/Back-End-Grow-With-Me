@@ -4,7 +4,7 @@ import com.growwithme.crops.domain.model.queries.GetCropByIdQuery;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.growwithme.crops.application.internal.outboundservices.acl.ExternalFarmerUserService;
+import com.growwithme.crops.application.internal.outboundservices.acl.ExternalIamService;
 import com.growwithme.crops.domain.model.aggregates.Crop;
 import com.growwithme.crops.domain.model.commands.CreateCropCommand;
 import com.growwithme.crops.domain.model.queries.GetAllCropsByFarmerIdQuery;
@@ -21,11 +21,11 @@ import java.util.Optional;
 public class CropContextFacadeImpl implements CropContextFacade {
     private final CropCommandService commandService;
     private final CropQueryService queryService;
-    private final ExternalFarmerUserService externalFarmerUserService;
+    private final ExternalIamService externalIamService;
 
     @Override
-    public Long createCrop(Long farmerId, String productName, String code, CropCategory category, CropStatus status, Float area, String location, Float cost) {
-        var cropResult = commandService.handle(new CreateCropCommand(farmerId, productName, code, category, status, area, location, cost));
+    public Long createCrop(Long farmerId, String productName, String code, CropCategory category, Float area, String location, Float cost) {
+        var cropResult = commandService.handle(new CreateCropCommand(farmerId, productName, code, category, area, location, cost));
 
         if (cropResult.isEmpty()) {
             throw new IllegalArgumentException("Failed to create crop for farmer with ID: " + farmerId);

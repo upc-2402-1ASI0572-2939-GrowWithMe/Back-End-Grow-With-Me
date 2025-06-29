@@ -1,29 +1,34 @@
 package com.growwithme.crops.interfaces.rest;
 
+import com.growwithme.crops.application.internal.outboundservices.acl.ExternalIamService;
+import com.growwithme.crops.domain.model.commands.CreateCropCommand;
+import com.growwithme.crops.domain.model.events.CropStatusFromHarvestedToEmptyEvent;
+import com.growwithme.crops.domain.model.queries.GetCropByIdQuery;
+import com.growwithme.crops.domain.model.valueobjects.CropCategory;
+import com.growwithme.crops.domain.model.valueobjects.CropStatus;
 import com.growwithme.crops.infrastructure.persistence.jpa.repositories.CropRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import com.growwithme.crops.domain.model.commands.DeleteCropCommand;
 import com.growwithme.crops.domain.model.queries.GetAllCropsByFarmerIdQuery;
 import com.growwithme.crops.domain.model.queries.GetAllCropsQuery;
-import com.growwithme.crops.domain.model.queries.GetCropByIdQuery;
 import com.growwithme.crops.domain.services.CropCommandService;
 import com.growwithme.crops.domain.services.CropQueryService;
-import com.growwithme.crops.interfaces.rest.resources.CreateCropResource;
 import com.growwithme.crops.interfaces.rest.resources.CropResource;
 import com.growwithme.crops.interfaces.rest.resources.UpdateCropResource;
-import com.growwithme.crops.interfaces.rest.transform.CreateCropCommandFromResourceAssembler;
 import com.growwithme.crops.interfaces.rest.transform.CropResourceFromEntityAssembler;
 import com.growwithme.crops.interfaces.rest.transform.UpdateCropCommandFromResourceAssembler;
-import com.growwithme.profiles.domain.services.FarmerUserQueryService;
 import java.util.List;
 
 @AllArgsConstructor
@@ -35,6 +40,8 @@ public class CropsController {
     private final CropCommandService cropCommandService;
     private final CropQueryService cropQueryService;
     private final CropRepository repository;
+    private final ExternalIamService externalIamService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Operation(summary = "Create a new crop")
     @ApiResponses(value = {
@@ -42,24 +49,42 @@ public class CropsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     @PostMapping
-    public ResponseEntity<CropResource> createCrop(@RequestBody CreateCropResource resource) {
-        var createCropCommand = CreateCropCommandFromResourceAssembler.toCommandFromResource(resource);
-        var crop = cropCommandService.handle(createCropCommand);
-        if (crop.isEmpty()) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<CropResource> createCrop(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("productName") String productName, @RequestParam("code") String code, @RequestParam("category") CropCategory category, @RequestParam("area") Float area, @RequestParam("location") String location, @RequestParam("cost") Float cost) {
+        var email = userDetails.getUsername();
+        var farmerId = externalIamService.fetchUserIdByEmail(email);
+
+        if (farmerId == null) {
+            throw new IllegalArgumentException("Farmer not found for email: " + email);
         }
+
+        var createCropCommand = new CreateCropCommand(
+                farmerId,
+                productName,
+                code,
+                category,
+                area,
+                location,
+                cost
+        );
+
+        var crop = cropCommandService.handle(createCropCommand);
+
+        if (crop.isEmpty()) {
+            throw new IllegalArgumentException("Invalid input data for creating crop");
+        }
+
         var cropResource = CropResourceFromEntityAssembler.toResourceFromEntity(crop.get());
         return new ResponseEntity<>(cropResource, HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Delete a crop by ID")
+    @Operation(summary = "Delete a crop by crop ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "Crop deleted successfully"),
             @ApiResponse(responseCode = "404", description = "Crop not found")
     })
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteCrop(@PathVariable Long id) {
-        var deleteCropCommand = new DeleteCropCommand(id);
+    @DeleteMapping("/{cropId}")
+    public ResponseEntity<?> deleteCrop(@PathVariable Long cropId) {
+        var deleteCropCommand = new DeleteCropCommand(cropId);
         cropCommandService.handle(deleteCropCommand);
         return ResponseEntity.ok("Crop deleted successfully");
     }
@@ -70,9 +95,9 @@ public class CropsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data"),
             @ApiResponse(responseCode = "404", description = "Crop not found")
     })
-    @PutMapping("/{id}")
-    public ResponseEntity<CropResource> updateCrop(@PathVariable Long id, @RequestBody UpdateCropResource resource) {
-        var updateCropCommand = UpdateCropCommandFromResourceAssembler.toCommandFromResource(id, resource);
+    @PutMapping("/{cropId}")
+    public ResponseEntity<CropResource> updateCrop(@PathVariable Long cropId, @RequestBody UpdateCropResource resource) {
+        var updateCropCommand = UpdateCropCommandFromResourceAssembler.toCommandFromResource(cropId, resource);
         var updatedCrop = cropCommandService.handle(updateCropCommand);
         if (updatedCrop.isEmpty()) {
             return ResponseEntity.badRequest().build();
@@ -81,16 +106,16 @@ public class CropsController {
         return ResponseEntity.ok(cropResource);
     }
 
-    @Operation(summary = "Get a crop by ID")
+    @Operation(summary = "Get a crop by crop ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Crop found"),
             @ApiResponse(responseCode = "404", description = "Crop not found")
     })
-    @GetMapping("/{id}")
-    public ResponseEntity<CropResource> getCropById(@PathVariable Long id) {
-        var getCropByIdQuery = new GetCropByIdQuery(id);
+    @GetMapping("/{cropId}")
+    public ResponseEntity<CropResource> getCropById(@PathVariable Long cropId) {
+        var getCropByIdQuery = new GetCropByIdQuery(cropId);
         var crop = cropQueryService.handle(getCropByIdQuery);
-        if (crop.isEmpty()) { return ResponseEntity.badRequest().build(); }
+        if (crop.isEmpty()) { return ResponseEntity.notFound().build(); }
         var cropResource = CropResourceFromEntityAssembler.toResourceFromEntity(crop.get());
         return ResponseEntity.ok(cropResource);
     }
@@ -116,29 +141,43 @@ public class CropsController {
             @ApiResponse(responseCode = "200", description = "Crops found for the farmer"),
             @ApiResponse(responseCode = "404", description = "No crops found for the farmer")
     })
-    @GetMapping("/farmers/{farmerId}")
-    public ResponseEntity<List<CropResource>> getAllCropsByFarmerId(@PathVariable Long farmerId) {
+    @GetMapping("/farmer")
+    public ResponseEntity<List<CropResource>> getAllCropsByFarmerId(@AuthenticationPrincipal UserDetails userDetails) {
+        var email = userDetails.getUsername();
+        var farmerId = externalIamService.fetchUserIdByEmail(email);
+
+        if (farmerId == null) {
+            throw new IllegalArgumentException("Farmer ID not found for the provided email");
+        }
+
         var getAllCropsQuery = new GetAllCropsByFarmerIdQuery(farmerId);
         var crops = cropQueryService.handle(getAllCropsQuery);
-        if (crops.isEmpty()) { return ResponseEntity.badRequest().build(); }
+        if (crops.isEmpty()) { return ResponseEntity.noContent().build(); }
         var cropResources = crops.stream()
                 .map(CropResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(cropResources);
     }
 
-    @GetMapping("/{id}/temperatures")
-    public ResponseEntity<List<Float>> getTemperatures(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(crop -> ResponseEntity.ok(crop.getTemperatureList()))
-                .orElse(ResponseEntity.notFound().build());
-    }
+    @Operation(summary = "Set crop status to EMPTY")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Crop status set to HARVESTED"),
+            @ApiResponse(responseCode = "404", description = "Crop not found"),
+            @ApiResponse(responseCode = "400", description = "Crop must be in PLANTED status to transition to HARVESTED")
+    })
+    @PutMapping("/set-empty/{cropId}")
+    public ResponseEntity<?> setCropToEmpty(@PathVariable Long cropId) {
+        var cropResult = cropQueryService.handle(new GetCropByIdQuery(cropId));
+        if (cropResult.isEmpty()) {
+            throw new IllegalArgumentException("Crop with ID " + cropId + " does not exist.");
+        }
 
-    @GetMapping("/{id}/humidities")
-    public ResponseEntity<List<Float>> getHumidities(@PathVariable Long id) {
-        return repository.findById(id)
-                .map(crop -> ResponseEntity.ok(crop.getHumidityList()))
-                .orElse(ResponseEntity.notFound().build());
-    }
+        var crop = cropResult.get();
+        if (crop.getStatus() != CropStatus.HARVESTED) {
+            return ResponseEntity.badRequest().body("Crop must be in HARVESTED status to transition to EMPTY.");
+        }
 
+        eventPublisher.publishEvent(new CropStatusFromHarvestedToEmptyEvent(this, cropId, CropStatus.HARVESTED, CropStatus.EMPTY));
+        return ResponseEntity.ok("Crop status set to EMPTY successfully.");
+    }
 }

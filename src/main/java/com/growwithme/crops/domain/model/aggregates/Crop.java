@@ -1,5 +1,6 @@
 package com.growwithme.crops.domain.model.aggregates;
 
+import com.growwithme.iam.domain.model.aggregates.FarmerUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -7,7 +8,6 @@ import lombok.Setter;
 
 import com.growwithme.crops.domain.model.valueobjects.CropCategory;
 import com.growwithme.crops.domain.model.valueobjects.CropStatus;
-import com.growwithme.profiles.domain.model.aggregates.FarmerUser;
 import com.growwithme.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 import java.util.List;
 
@@ -43,20 +43,12 @@ public class Crop extends AuditableAbstractAggregateRoot<Crop> {
     @NotNull
     private String location;
 
-    @NotNull
-    private Float cost;
+    private Double maxTemperature;
+    private Double minTemperature;
+    private Double maxHumidity;
+    private Double minHumidity;
 
-    @ElementCollection
-    @CollectionTable(name = "temperature_list", joinColumns = @JoinColumn(name = "crop_id"))
-    @Column(name = "temperature")
-    private List<Float> temperatureList;
-
-    @ElementCollection
-    @CollectionTable(name = "humidity_list", joinColumns = @JoinColumn(name = "crop_id"))
-    @Column(name = "humidity")
-    private List<Float> humidityList;
-
-    public Crop(FarmerUser farmerUser, String productName, String code, CropCategory category, Float area, String location, Float cost) {
+    public Crop(FarmerUser farmerUser, String productName, String code, CropCategory category, Float area, String location) {
         this.farmerUser = farmerUser;
         this.productName = productName;
         this.code = code;
@@ -64,10 +56,8 @@ public class Crop extends AuditableAbstractAggregateRoot<Crop> {
         this.status = CropStatus.EMPTY;
         this.area = area;
         this.location = location;
-        this.cost = cost;
         this.activities = List.of();
-        this.temperatureList = List.of();
-        this.humidityList = List.of();
+        setDefaults();
     }
 
     public Crop() {}
@@ -82,15 +72,42 @@ public class Crop extends AuditableAbstractAggregateRoot<Crop> {
         }
     }
 
-    public void addTemperatureToList(Float temperature) {
-        if (temperature != null) {
-            this.temperatureList.add(temperature);
-        }
-    }
-
-    public void addHumidityToList(Float humidity) {
-        if (humidity != null) {
-            this.humidityList.add(humidity);
+    private void setDefaults() {
+        if (this.category == CropCategory.VEGETABLE) {
+            this.maxTemperature = 28.0;
+            this.minTemperature = 15.0;
+            this.maxHumidity = 80.0;
+            this.minHumidity = 60.0;
+        } else if (this.category == CropCategory.FRUIT) {
+            this.maxTemperature = 32.0;
+            this.minTemperature = 18.0;
+            this.maxHumidity = 75.0;
+            this.minHumidity = 50.0;
+        } else if (this.category == CropCategory.HERB) {
+            this.maxTemperature = 26.0;
+            this.minTemperature = 16.0;
+            this.maxHumidity = 75.0;
+            this.minHumidity = 55.0;
+        } else if (this.category == CropCategory.FLOWER) {
+            this.maxTemperature = 25.0;
+            this.minTemperature = 15.0;
+            this.maxHumidity = 80.0;
+            this.minHumidity = 60.0;
+        } else if (this.category == CropCategory.GRAIN) {
+            this.maxTemperature = 30.0;
+            this.minTemperature = 12.0;
+            this.maxHumidity = 70.0;
+            this.minHumidity = 40.0;
+        } else if (this.category == CropCategory.NUT) {
+            this.maxTemperature = 35.0;
+            this.minTemperature = 20.0;
+            this.maxHumidity = 60.0;
+            this.minHumidity = 40.0;
+        } else if (this.category == CropCategory.LEGUME) {
+            this.maxTemperature = 30.0;
+            this.minTemperature = 18.0;
+            this.maxHumidity = 80.0;
+            this.minHumidity = 50.0;
         }
     }
 }

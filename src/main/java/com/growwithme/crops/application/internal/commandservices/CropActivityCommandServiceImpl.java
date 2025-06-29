@@ -27,7 +27,7 @@ public class CropActivityCommandServiceImpl implements CropActivityCommandServic
             throw new IllegalArgumentException("Crop with ID " + command.cropId() + " does not exist.");
         }
 
-        var existingCropActivity = cropActivityRepository.existsCropActivityByCrop_IdAndActivityDate(cropResult.get().getId(), command.activityDate());
+        var existingCropActivity = cropActivityRepository.existsCropActivityByCrop_IdAndActivityDateNot(cropResult.get().getId(), command.activityDate());
 
         if (existingCropActivity) {
             throw new IllegalArgumentException("Crop activity with the same date already exists for this crop.");
@@ -82,7 +82,6 @@ public class CropActivityCommandServiceImpl implements CropActivityCommandServic
     @Override
     public Optional<CropActivity> handle(UpdateCropActivityCommand command) {
         var cropActivityResult = cropActivityRepository.findById(command.id());
-        var cropResult = cropRepository.findById(cropActivityResult.get().getCrop().getId());
 
         if (cropActivityResult.isEmpty()) {
             throw new IllegalArgumentException("Crop activity not found with ID: " + command.id());
@@ -90,8 +89,16 @@ public class CropActivityCommandServiceImpl implements CropActivityCommandServic
 
         var cropActivity = cropActivityResult.get();
 
-        var existingCropActivity = cropActivityRepository.existsCropActivityByIdAndCrop_Id(command.id(), cropResult.get().getId());
-        var existingCropActivityWithSameDate = cropActivityRepository.existsCropActivityByCrop_IdAndActivityDate(cropResult.get().getId(), command.activityDate());
+        var cropResult = cropRepository.findById(cropActivityResult.get().getCrop().getId());
+
+        if (cropResult.isEmpty()) {
+            throw new IllegalArgumentException("Crop not found with ID: " + cropActivityResult.get().getCrop().getId());
+        }
+
+        var crop = cropResult.get();
+
+        var existingCropActivity = cropActivityRepository.existsCropActivityByIdAndCrop_IdNot(command.id(), crop.getId());
+        var existingCropActivityWithSameDate = cropActivityRepository.existsCropActivityByCrop_IdAndActivityDateNot(crop.getId(), command.activityDate());
 
         if (existingCropActivity) {
             throw new IllegalArgumentException("Crop activity does not belong to the specified crop.");
