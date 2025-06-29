@@ -1,12 +1,12 @@
 package com.growwithme.consultations.domain.model.aggregates;
 
+import com.growwithme.iam.domain.model.aggregates.FarmerUser;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
 import com.growwithme.consultations.domain.model.valueobjects.ConsultationStatus;
-import com.growwithme.profiles.domain.model.aggregates.FarmerUser;
 import com.growwithme.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 
 @Entity
@@ -29,7 +29,7 @@ public class Consultation extends AuditableAbstractAggregateRoot<Consultation> {
     @NotNull
     private ConsultationStatus status;
 
-    public Consultation(FarmerUser farmerUser, String title, String description, ConsultationStatus status) {
+    public Consultation(FarmerUser farmerUser, String title, String description) {
         this.farmerUser = farmerUser;
         this.title = title;
         this.description = description;

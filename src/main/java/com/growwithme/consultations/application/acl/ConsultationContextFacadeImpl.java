@@ -20,8 +20,8 @@ public class ConsultationContextFacadeImpl implements ConsultationContextFacade 
     private final ConsultationQueryService queryService;
 
     @Override
-    public Long createConsultation(Long farmerId, String title, String description, ConsultationStatus status) {
-        var consultationResult = commandService.handle(new CreateConsultationCommand(farmerId, title, description, status));
+    public Long createConsultation(Long farmerId, String title, String description) {
+        var consultationResult = commandService.handle(new CreateConsultationCommand(farmerId, title, description));
 
         if (consultationResult.isEmpty()) {
             throw new IllegalStateException("Failed to create consultation");

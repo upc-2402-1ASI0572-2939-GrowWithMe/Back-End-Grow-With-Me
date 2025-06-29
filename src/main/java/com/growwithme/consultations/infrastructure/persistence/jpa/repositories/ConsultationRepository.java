@@ -10,9 +10,7 @@ import java.util.List;
 public interface ConsultationRepository extends JpaRepository<Consultation, Long> {
     List<Consultation> findAllByFarmerUser_Id(Long farmerId);
 
-    boolean existsConsultationByIdAndFarmerUser_Id(Long id, Long farmerId);
+    boolean existsConsultationByTitleAndFarmerUser_IdNot(String title, Long farmerUserId);
 
-    boolean findByTitleAndFarmerUser_Id(String title, Long farmerId);
-
-    boolean existsConsultationByTitleAndFarmerUser_Id(String title, Long farmerId);
+    boolean existsConsultationByIdAndFarmerUser_IdNot(Long id, Long farmerUserId);
 }
