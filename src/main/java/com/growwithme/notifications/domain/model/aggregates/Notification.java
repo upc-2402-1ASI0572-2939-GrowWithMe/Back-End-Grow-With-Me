@@ -1,5 +1,6 @@
 package com.growwithme.notifications.domain.model.aggregates;
 
+import com.growwithme.iam.domain.model.aggregates.FarmerUser;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -7,7 +8,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
-import com.growwithme.profiles.domain.model.aggregates.FarmerUser;
 import com.growwithme.shared.domain.model.aggregates.AuditableAbstractAggregateRoot;
 
 @Entity

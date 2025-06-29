@@ -3,7 +3,7 @@ package com.growwithme.notifications.application.internal.commandservices;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.growwithme.crops.application.internal.outboundservices.acl.ExternalFarmerUserService;
+import com.growwithme.crops.application.internal.outboundservices.acl.ExternalIamService;
 import com.growwithme.notifications.domain.model.aggregates.Notification;
 import com.growwithme.notifications.domain.model.commands.CreateNotificationCommand;
 import com.growwithme.notifications.domain.model.commands.DeleteNotificationCommand;
@@ -15,14 +15,18 @@ import java.util.Optional;
 @AllArgsConstructor
 public class NotificationCommandServiceImpl implements NotificationCommandService {
     private final NotificationRepository repository;
-    private final ExternalFarmerUserService externalFarmerUserService;
+    private final ExternalIamService externalIamService;
 
     @Override
     public Optional<Notification> handle(CreateNotificationCommand command) {
-        var farmerUserResult = externalFarmerUserService.fetchFarmerUserById(command.farmerId());
+        var farmerUserResult = externalIamService.fetchFarmerUserById(command.farmerId());
+
+        if (farmerUserResult.isEmpty()) {
+            throw new IllegalArgumentException("Farmer not found with ID: " + command.farmerId());
+        }
 
         var newNotification = new Notification(
-                farmerUserResult,
+                farmerUserResult.get(),
                 command.title(),
                 command.message()
         );
