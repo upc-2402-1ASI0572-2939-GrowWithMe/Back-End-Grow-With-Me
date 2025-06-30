@@ -11,8 +11,7 @@ public class UpdateCropCommandFromResourceAssembler {
                 resource.code(),
                 resource.category(),
                 resource.area(),
-                resource.location(),
-                resource.cost()
+                resource.location()
         );
     }
 }

@@ -49,7 +49,7 @@ public class CropsController {
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     @PostMapping
-    public ResponseEntity<CropResource> createCrop(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("productName") String productName, @RequestParam("code") String code, @RequestParam("category") CropCategory category, @RequestParam("area") Float area, @RequestParam("location") String location, @RequestParam("cost") Float cost) {
+    public ResponseEntity<CropResource> createCrop(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("productName") String productName, @RequestParam("code") String code, @RequestParam("category") CropCategory category, @RequestParam("area") Float area, @RequestParam("location") String location) {
         var email = userDetails.getUsername();
         var farmerId = externalIamService.fetchUserIdByEmail(email);
 
@@ -63,8 +63,7 @@ public class CropsController {
                 code,
                 category,
                 area,
-                location,
-                cost
+                location
         );
 
         var crop = cropCommandService.handle(createCropCommand);

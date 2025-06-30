@@ -11,8 +11,7 @@ public class CreateCropCommandFromResourceAssembler {
                 resource.code(),
                 resource.category(),
                 resource.area(),
-                resource.location(),
-                resource.cost()
+                resource.location()
         );
     }
 }

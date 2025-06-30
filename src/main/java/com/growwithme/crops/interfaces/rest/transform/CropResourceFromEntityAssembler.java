@@ -13,8 +13,7 @@ public class CropResourceFromEntityAssembler {
                 entity.getCategory(),
                 entity.getStatus(),
                 entity.getArea(),
-                entity.getLocation(),
-                entity.getCost()
+                entity.getLocation()
         );
     }
 }

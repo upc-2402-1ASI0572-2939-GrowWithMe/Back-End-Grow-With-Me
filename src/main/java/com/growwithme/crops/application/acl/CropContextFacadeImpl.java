@@ -24,8 +24,8 @@ public class CropContextFacadeImpl implements CropContextFacade {
     private final ExternalIamService externalIamService;
 
     @Override
-    public Long createCrop(Long farmerId, String productName, String code, CropCategory category, Float area, String location, Float cost) {
-        var cropResult = commandService.handle(new CreateCropCommand(farmerId, productName, code, category, area, location, cost));
+    public Long createCrop(Long farmerId, String productName, String code, CropCategory category, Float area, String location) {
+        var cropResult = commandService.handle(new CreateCropCommand(farmerId, productName, code, category, area, location));
 
         if (cropResult.isEmpty()) {
             throw new IllegalArgumentException("Failed to create crop for farmer with ID: " + farmerId);

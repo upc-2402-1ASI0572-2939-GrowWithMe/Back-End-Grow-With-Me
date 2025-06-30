@@ -11,7 +11,6 @@ public record CropResource(
         CropCategory category,
         CropStatus status,
         Float area,
-        String location,
-        Float cost
+        String location
 ) {
 }

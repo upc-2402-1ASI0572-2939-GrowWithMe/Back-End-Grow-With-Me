@@ -7,7 +7,6 @@ public record UpdateCropResource(
         String code,
         CropCategory category,
         Float area,
-        String location,
-        Float cost
+        String location
 ) {
 }

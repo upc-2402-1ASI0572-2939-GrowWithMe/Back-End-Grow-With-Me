@@ -39,8 +39,7 @@ public class CropCommandServiceImpl implements CropCommandService {
                 command.code(),
                 command.category(),
                 command.area(),
-                command.location(),
-                command.cost()
+                command.location()
         );
 
         try {
@@ -95,7 +94,6 @@ public class CropCommandServiceImpl implements CropCommandService {
         crop.setCategory(command.category());
         crop.setArea(command.area());
         crop.setLocation(command.location());
-        crop.setCost(command.cost());
 
         try {
             var savedCrop = repository.save(crop);
