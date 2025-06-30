@@ -35,17 +35,16 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
 
         var farmerUser = farmerUserResult.get();
 
-        var existingDevice = repository.existsDeviceByNameAndCrop_IdAndFarmerUser_IdNot(command.name(), command.cropId(), farmerUserResult.get().getId());
+        var existingDevice = repository.existsDeviceByCrop_IdAndFarmerUser_IdNot(command.cropId(), farmerUserResult.get().getId());
 
         if (existingDevice) {
-            throw new IllegalArgumentException("Device with name '" + command.name() + "' already exists for this crop and farmer user.");
+            throw new IllegalArgumentException("Device for this crop already exists for this farmer.");
         }
 
         var newDevice = new Device(
                 cropResult,
                 farmerUserResult.get(),
-                command.name(),
-                command.deviceType()
+                command.name()
         );
 
         try {

@@ -8,8 +8,7 @@ public class CreateDeviceCommandFromResourceAssembler {
         return new CreateDeviceCommand(
                 resource.cropId(),
                 resource.farmerId(),
-                resource.name(),
-                resource.deviceType()
+                resource.name()
         );
     }
 }

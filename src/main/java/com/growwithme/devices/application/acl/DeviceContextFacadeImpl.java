@@ -4,7 +4,6 @@ import com.growwithme.devices.domain.model.aggregates.Device;
 import com.growwithme.devices.domain.model.commands.CreateDeviceCommand;
 import com.growwithme.devices.domain.model.queries.GetAllDevicesByFarmerIdQuery;
 import com.growwithme.devices.domain.model.queries.GetDeviceByIdQuery;
-import com.growwithme.devices.domain.model.valueobjects.DeviceType;
 import com.growwithme.devices.domain.services.DeviceCommandService;
 import com.growwithme.devices.domain.services.DeviceQueryService;
 import com.growwithme.devices.interfaces.acl.DeviceContextFacade;
@@ -21,8 +20,8 @@ public class DeviceContextFacadeImpl implements DeviceContextFacade {
     private final DeviceQueryService queryService;
 
     @Override
-    public Long createDevice(Long cropId, Long farmerId, String name, DeviceType deviceType) {
-        var deviceResult = commandService.handle(new CreateDeviceCommand(cropId, farmerId, name, deviceType));
+    public Long createDevice(Long cropId, Long farmerId, String name) {
+        var deviceResult = commandService.handle(new CreateDeviceCommand(cropId, farmerId, name));
 
         if (deviceResult.isEmpty()) {
             throw new IllegalStateException("Device creation failed");

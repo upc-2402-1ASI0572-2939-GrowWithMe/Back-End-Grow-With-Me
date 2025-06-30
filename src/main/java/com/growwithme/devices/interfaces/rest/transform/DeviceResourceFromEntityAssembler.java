@@ -9,8 +9,7 @@ public class DeviceResourceFromEntityAssembler {
                 entity.getId(),
                 entity.getCrop().getId(),
                 entity.getFarmerUser().getId(),
-                entity.getName(),
-                entity.getDeviceType()
+                entity.getName()
         );
     }
 }

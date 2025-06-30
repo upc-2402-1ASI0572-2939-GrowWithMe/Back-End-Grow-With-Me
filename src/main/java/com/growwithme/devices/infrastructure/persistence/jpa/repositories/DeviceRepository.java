@@ -8,7 +8,7 @@ import java.util.List;
 
 @Repository
 public interface DeviceRepository extends JpaRepository<Device, Long> {
-    boolean existsDeviceByNameAndCrop_IdAndFarmerUser_IdNot(String name, Long cropId, Long farmerId);
+    boolean existsDeviceByCrop_IdAndFarmerUser_IdNot(Long cropId, Long farmerId);
 
     List<Device> findAllByFarmerUser_Id(Long farmerUserId);
 }
