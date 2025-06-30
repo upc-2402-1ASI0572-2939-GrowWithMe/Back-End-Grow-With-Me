@@ -5,10 +5,11 @@ import com.growwithme.devices.domain.model.commands.CreateDeviceCommand;
 import com.growwithme.devices.domain.model.commands.DeleteDeviceCommand;
 import com.growwithme.devices.domain.model.queries.GetAllDevicesByFarmerIdQuery;
 import com.growwithme.devices.domain.model.queries.GetDeviceByIdQuery;
-import com.growwithme.devices.domain.model.valueobjects.DeviceType;
 import com.growwithme.devices.domain.services.DeviceCommandService;
 import com.growwithme.devices.domain.services.DeviceQueryService;
 import com.growwithme.devices.interfaces.rest.resources.DeviceResource;
+import com.growwithme.devices.interfaces.rest.resources.DeviceSensorDataInputResource;
+import com.growwithme.devices.interfaces.rest.resources.DeviceSensorDataResource;
 import com.growwithme.devices.interfaces.rest.transform.DeviceResourceFromEntityAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -40,7 +41,7 @@ public class DevicesController {
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     @PostMapping
-    public ResponseEntity<DeviceResource> createDevice(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("cropId") Long cropId, @RequestParam("name") String name, @RequestParam("deviceType") DeviceType deviceType) {
+    public ResponseEntity<DeviceResource> createDevice(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("cropId") Long cropId, @RequestParam("name") String name) {
         var email = userDetails.getUsername();
         var farmerId = externalIamService.fetchUserIdByEmail(email);
 
@@ -51,8 +52,7 @@ public class DevicesController {
         var createDeviceCommand = new CreateDeviceCommand(
                 cropId,
                 farmerId,
-                name,
-                deviceType
+                name
         );
 
         var device = deviceCommandService.handle(createDeviceCommand);
@@ -152,37 +152,88 @@ public class DevicesController {
         return ResponseEntity.ok(device.getHumidityList());
     }
 
-    @Operation(summary = "Patch temperature for a device by ID")
+    @Operation(summary = "Get temperature and humidity lists for a device by ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Temperature patched successfully"),
+            @ApiResponse(responseCode = "200", description = "Sensor data retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "Device not found")
     })
-    @PostMapping("/temperature-list/{deviceId}/{temperature}")
-    public ResponseEntity<Float> patchTemperatureByDeviceId(@PathVariable Long deviceId, @PathVariable Float temperature) {
+    @GetMapping("/sensor-data/{deviceId}")
+    public ResponseEntity<DeviceSensorDataResource> getSensorDataByDeviceId(@PathVariable Long deviceId) {
         var deviceResult = deviceQueryService.handle(new GetDeviceByIdQuery(deviceId));
         if (deviceResult.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         var device = deviceResult.get();
-        device.addTemperatureToList(temperature);
-        return ResponseEntity.ok(temperature);
+        var resource = new DeviceSensorDataResource(device.getTemperatureList(), device.getHumidityList());
+        return ResponseEntity.ok(resource);
     }
 
-    @Operation(summary = "Patch humidity for a device by ID")
+    @Operation(summary = "Post temperature and humidity for a device by ID")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Humidity patched successfully"),
+            @ApiResponse(responseCode = "200", description = "Sensor data added successfully"),
             @ApiResponse(responseCode = "404", description = "Device not found")
     })
-    @PostMapping("/humidity-list/{deviceId}/{humidity}")
-    public ResponseEntity<Float> patchHumidityByDeviceId(@PathVariable Long deviceId, @PathVariable Float humidity) {
+    @PostMapping("/sensor-data/{deviceId}/{temperature}/{humidity}")
+    public ResponseEntity<DeviceSensorDataResource> postSensorDataByDeviceId(@PathVariable Long deviceId, @PathVariable Float temperature, @PathVariable Float humidity) {
         var deviceResult = deviceQueryService.handle(new GetDeviceByIdQuery(deviceId));
         if (deviceResult.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
         var device = deviceResult.get();
+
+        device.addTemperatureToList(temperature);
         device.addHumidityToList(humidity);
-        return ResponseEntity.ok(humidity);
+
+        var resource = new DeviceSensorDataResource(
+                device.getTemperatureList(),
+                device.getHumidityList()
+        );
+
+        return ResponseEntity.ok(resource);
+    }
+
+    @Operation(summary = "Post sensor data for a device")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Sensor data added successfully"),
+            @ApiResponse(responseCode = "404", description = "Device not found")
+    })
+    @PostMapping("/sensor-data/{deviceId}")
+    public ResponseEntity<DeviceSensorDataResource> postSensorDataByDeviceId(@PathVariable Long deviceId, @RequestBody DeviceSensorDataInputResource sensorDataInput) {
+        var deviceResult = deviceQueryService.handle(new GetDeviceByIdQuery(deviceId));
+        if (deviceResult.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var device = deviceResult.get();
+
+        device.addTemperatureToList(sensorDataInput.temperature());
+        device.addHumidityToList(sensorDataInput.humidity());
+
+        var resource = new DeviceSensorDataResource(
+                device.getTemperatureList(),
+                device.getHumidityList()
+        );
+
+        return ResponseEntity.ok(resource);
+    }
+
+    @Operation(summary = "Activate a device by ID")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Device activated successfully"),
+            @ApiResponse(responseCode = "404", description = "Device not found")
+    })
+    @PostMapping("/activate/{deviceId}")
+    public ResponseEntity<?> activateDevice(@PathVariable Long deviceId) {
+        var deviceResult = deviceQueryService.handle(new GetDeviceByIdQuery(deviceId));
+        if (deviceResult.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var device = deviceResult.get();
+        device.activateDevice();
+
+        return ResponseEntity.ok("Device activated successfully");
     }
 }
