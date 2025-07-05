@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -25,14 +26,14 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
     private String name;
 
     @ElementCollection
-    @CollectionTable(name = "temperature_list", joinColumns = @JoinColumn(name = "crop_id"))
+    @CollectionTable(name = "temperature_list", joinColumns = @JoinColumn(name = "device_id"))
     @Column(name = "temperature")
-    private List<Float> temperatureList;
+    private List<Float> temperatureList = new ArrayList<>();
 
     @ElementCollection
-    @CollectionTable(name = "humidity_list", joinColumns = @JoinColumn(name = "crop_id"))
+    @CollectionTable(name = "humidity_list", joinColumns = @JoinColumn(name = "device_id"))
     @Column(name = "humidity")
-    private List<Float> humidityList;
+    private List<Float> humidityList = new ArrayList<>();
 
     private Boolean isActive;
 
@@ -40,23 +41,17 @@ public class Device extends AuditableAbstractAggregateRoot<Device> {
         this.crop = crop;
         this.farmerUser = farmerUser;
         this.name = name;
-        this.temperatureList = List.of();
-        this.humidityList = List.of();
         this.isActive = false;
     }
 
     public Device() {}
 
     public void addTemperatureToList(Float temperature) {
-        if (temperature != null) {
-            this.temperatureList.add(temperature);
-        }
+        this.temperatureList.add(temperature);
     }
 
     public void addHumidityToList(Float humidity) {
-        if (humidity != null) {
-            this.humidityList.add(humidity);
-        }
+        this.humidityList.add(humidity);
     }
 
     public void activateDevice() {

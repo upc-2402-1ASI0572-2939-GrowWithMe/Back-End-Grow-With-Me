@@ -7,6 +7,7 @@ import com.growwithme.devices.domain.model.queries.GetAllDevicesByFarmerIdQuery;
 import com.growwithme.devices.domain.model.queries.GetDeviceByIdQuery;
 import com.growwithme.devices.domain.services.DeviceCommandService;
 import com.growwithme.devices.domain.services.DeviceQueryService;
+import com.growwithme.devices.interfaces.rest.resources.CreateDeviceResource;
 import com.growwithme.devices.interfaces.rest.resources.DeviceResource;
 import com.growwithme.devices.interfaces.rest.resources.DeviceSensorDataInputResource;
 import com.growwithme.devices.interfaces.rest.resources.DeviceSensorDataResource;
@@ -41,7 +42,7 @@ public class DevicesController {
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     @PostMapping
-    public ResponseEntity<DeviceResource> createDevice(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("cropId") Long cropId, @RequestParam("name") String name) {
+    public ResponseEntity<DeviceResource> createDevice(@AuthenticationPrincipal UserDetails userDetails, @RequestBody CreateDeviceResource resource) {
         var email = userDetails.getUsername();
         var farmerId = externalIamService.fetchUserIdByEmail(email);
 
@@ -50,9 +51,9 @@ public class DevicesController {
         }
 
         var createDeviceCommand = new CreateDeviceCommand(
-                cropId,
+                resource.cropId(),
                 farmerId,
-                name
+                resource.name()
         );
 
         var device = deviceCommandService.handle(createDeviceCommand);
