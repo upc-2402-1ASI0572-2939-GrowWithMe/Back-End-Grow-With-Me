@@ -7,6 +7,7 @@ import com.growwithme.devices.domain.model.queries.GetAllDevicesByFarmerIdQuery;
 import com.growwithme.devices.domain.model.queries.GetDeviceByIdQuery;
 import com.growwithme.devices.domain.services.DeviceCommandService;
 import com.growwithme.devices.domain.services.DeviceQueryService;
+import com.growwithme.devices.infrastructure.persistence.jpa.repositories.DeviceRepository;
 import com.growwithme.devices.interfaces.rest.resources.CreateDeviceResource;
 import com.growwithme.devices.interfaces.rest.resources.DeviceResource;
 import com.growwithme.devices.interfaces.rest.resources.DeviceSensorDataInputResource;
@@ -34,6 +35,7 @@ import java.util.List;
 public class DevicesController {
     private final DeviceCommandService deviceCommandService;
     private final DeviceQueryService deviceQueryService;
+    private final DeviceRepository deviceRepository;
     private final ExternalIamService externalIamService;
 
     @Operation(summary = "Create a new device")
@@ -192,6 +194,8 @@ public class DevicesController {
                 device.getHumidityList()
         );
 
+        deviceRepository.save(device);
+
         return ResponseEntity.ok(resource);
     }
 
@@ -216,6 +220,8 @@ public class DevicesController {
                 device.getTemperatureList(),
                 device.getHumidityList()
         );
+
+        deviceRepository.save(device);
 
         return ResponseEntity.ok(resource);
     }
