@@ -2,11 +2,20 @@ package com.growwithme.crops.interfaces.rest;
 
 import com.growwithme.crops.application.internal.outboundservices.acl.ExternalIamService;
 import com.growwithme.crops.domain.model.commands.CreateCropCommand;
+import com.growwithme.crops.domain.model.commands.DeleteCropCommand;
 import com.growwithme.crops.domain.model.events.CropStatusFromHarvestedToEmptyEvent;
+import com.growwithme.crops.domain.model.queries.GetAllCropsByFarmerIdQuery;
+import com.growwithme.crops.domain.model.queries.GetAllCropsQuery;
 import com.growwithme.crops.domain.model.queries.GetCropByIdQuery;
-import com.growwithme.crops.domain.model.valueobjects.CropCategory;
 import com.growwithme.crops.domain.model.valueobjects.CropStatus;
+import com.growwithme.crops.domain.services.CropCommandService;
+import com.growwithme.crops.domain.services.CropQueryService;
 import com.growwithme.crops.infrastructure.persistence.jpa.repositories.CropRepository;
+import com.growwithme.crops.interfaces.rest.resources.CropResource;
+import com.growwithme.crops.interfaces.rest.resources.CreateCropResource;
+import com.growwithme.crops.interfaces.rest.resources.UpdateCropResource;
+import com.growwithme.crops.interfaces.rest.transform.CropResourceFromEntityAssembler;
+import com.growwithme.crops.interfaces.rest.transform.UpdateCropCommandFromResourceAssembler;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -20,15 +29,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import com.growwithme.crops.domain.model.commands.DeleteCropCommand;
-import com.growwithme.crops.domain.model.queries.GetAllCropsByFarmerIdQuery;
-import com.growwithme.crops.domain.model.queries.GetAllCropsQuery;
-import com.growwithme.crops.domain.services.CropCommandService;
-import com.growwithme.crops.domain.services.CropQueryService;
-import com.growwithme.crops.interfaces.rest.resources.CropResource;
-import com.growwithme.crops.interfaces.rest.resources.UpdateCropResource;
-import com.growwithme.crops.interfaces.rest.transform.CropResourceFromEntityAssembler;
-import com.growwithme.crops.interfaces.rest.transform.UpdateCropCommandFromResourceAssembler;
 import java.util.List;
 
 @AllArgsConstructor
@@ -37,6 +37,7 @@ import java.util.List;
 @RequestMapping(value = "/api/v1/crops", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Crops", description = "Crops Management Endpoint")
 public class CropsController {
+
     private final CropCommandService cropCommandService;
     private final CropQueryService cropQueryService;
     private final CropRepository repository;
@@ -48,8 +49,11 @@ public class CropsController {
             @ApiResponse(responseCode = "201", description = "Crop created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    @PostMapping
-    public ResponseEntity<CropResource> createCrop(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("productName") String productName, @RequestParam("code") String code, @RequestParam("category") CropCategory category, @RequestParam("area") Float area, @RequestParam("location") String location) {
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CropResource> createCrop(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestBody CreateCropResource resource) {
+
         var email = userDetails.getUsername();
         var farmerId = externalIamService.fetchUserIdByEmail(email);
 
@@ -59,11 +63,11 @@ public class CropsController {
 
         var createCropCommand = new CreateCropCommand(
                 farmerId,
-                productName,
-                code,
-                category,
-                area,
-                location
+                resource.productName(),
+                resource.code(),
+                resource.category(),
+                resource.area(),
+                resource.location()
         );
 
         var crop = cropCommandService.handle(createCropCommand);
@@ -85,8 +89,11 @@ public class CropsController {
     public ResponseEntity<?> deleteCrop(@PathVariable Long cropId) {
         var deleteCropCommand = new DeleteCropCommand(cropId);
         cropCommandService.handle(deleteCropCommand);
-        return ResponseEntity.ok("Crop deleted successfully");
+
+        var response = java.util.Map.of("message", "Crop deleted successfully");
+        return ResponseEntity.ok(response);
     }
+
 
     @Operation(summary = "Update a crop by ID")
     @ApiResponses(value = {
@@ -114,7 +121,9 @@ public class CropsController {
     public ResponseEntity<CropResource> getCropById(@PathVariable Long cropId) {
         var getCropByIdQuery = new GetCropByIdQuery(cropId);
         var crop = cropQueryService.handle(getCropByIdQuery);
-        if (crop.isEmpty()) { return ResponseEntity.notFound().build(); }
+        if (crop.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
         var cropResource = CropResourceFromEntityAssembler.toResourceFromEntity(crop.get());
         return ResponseEntity.ok(cropResource);
     }
@@ -128,7 +137,9 @@ public class CropsController {
     public ResponseEntity<List<CropResource>> getAllCrops() {
         var getAllCropsQuery = new GetAllCropsQuery();
         var crops = cropQueryService.handle(getAllCropsQuery);
-        if (crops.isEmpty()) { return ResponseEntity.badRequest().build(); }
+        if (crops.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         var cropResources = crops.stream()
                 .map(CropResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
@@ -140,29 +151,27 @@ public class CropsController {
             @ApiResponse(responseCode = "200", description = "Crops found for the farmer"),
             @ApiResponse(responseCode = "404", description = "No crops found for the farmer")
     })
-    @GetMapping("/farmer")
-    public ResponseEntity<List<CropResource>> getAllCropsByFarmerId(@AuthenticationPrincipal UserDetails userDetails) {
-        var email = userDetails.getUsername();
-        var farmerId = externalIamService.fetchUserIdByEmail(email);
-
-        if (farmerId == null) {
-            throw new IllegalArgumentException("Farmer ID not found for the provided email");
-        }
-
+    @GetMapping("/farmer/{farmerId}")
+    public ResponseEntity<List<CropResource>> getAllCropsByFarmerId(@PathVariable Long farmerId) {
         var getAllCropsQuery = new GetAllCropsByFarmerIdQuery(farmerId);
         var crops = cropQueryService.handle(getAllCropsQuery);
-        if (crops.isEmpty()) { return ResponseEntity.noContent().build(); }
+
+        if (crops.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
         var cropResources = crops.stream()
                 .map(CropResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
+
         return ResponseEntity.ok(cropResources);
     }
 
     @Operation(summary = "Set crop status to EMPTY")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Crop status set to HARVESTED"),
+            @ApiResponse(responseCode = "200", description = "Crop status set to EMPTY"),
             @ApiResponse(responseCode = "404", description = "Crop not found"),
-            @ApiResponse(responseCode = "400", description = "Crop must be in PLANTED status to transition to HARVESTED")
+            @ApiResponse(responseCode = "400", description = "Crop must be in HARVESTED status to transition to EMPTY")
     })
     @PutMapping("/set-empty/{cropId}")
     public ResponseEntity<?> setCropToEmpty(@PathVariable Long cropId) {

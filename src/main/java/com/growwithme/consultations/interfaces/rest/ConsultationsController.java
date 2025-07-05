@@ -42,22 +42,16 @@ public class ConsultationsController {
             @ApiResponse(responseCode = "201", description = "Consultation created successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
-    @PostMapping
-    public ResponseEntity<ConsultationResource> createConsultation(@AuthenticationPrincipal UserDetails userDetails, @RequestParam("title") String title, @RequestParam("description") String description) {
-        var email = userDetails.getUsername();
-        var farmerId = externalIamService.fetchUserIdByEmail(email);
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ConsultationResource> createConsultation(@RequestBody CreateConsultationResource resource) {
 
-        if (farmerId == null) {
-            throw new IllegalArgumentException("Farmer ID not found for the provided email");
-        }
-
-        var creatConsultationCommand = new CreateConsultationCommand(
-                farmerId,
-                title,
-                description
+        var createConsultationCommand = new CreateConsultationCommand(
+                resource.farmerId(),
+                resource.title(),
+                resource.description()
         );
 
-        var consultation = commandService.handle(creatConsultationCommand);
+        var consultation = commandService.handle(createConsultationCommand);
 
         if (consultation.isEmpty()) {
             throw new IllegalArgumentException("Invalid input data for creating consultation");
@@ -113,29 +107,25 @@ public class ConsultationsController {
                 .toList();
         return ResponseEntity.ok(consultationResources);
     }
-
     @Operation(summary = "Get all consultations by farmer ID")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Consultations retrieved successfully"),
             @ApiResponse(responseCode = "404", description = "No consultations found for the farmer")
     })
-    @GetMapping("/farmer")
-    public ResponseEntity<List<ConsultationResource>> getAllConsultationsByFarmerId(@AuthenticationPrincipal UserDetails userDetails) {
-        var email = userDetails.getUsername();
-        var farmerId = externalIamService.fetchUserIdByEmail(email);
-
-        if (farmerId == null) {
-            return ResponseEntity.notFound().build();
-        }
-
+    @GetMapping("/{farmerId}")
+    public ResponseEntity<List<ConsultationResource>> getAllConsultationsByFarmerId(@PathVariable Long farmerId) {
         var getAllConsultationsQuery = new GetAllConsultationsByFarmerIdQuery(farmerId);
         var consultations = queryService.handle(getAllConsultationsQuery);
+
         if (consultations.isEmpty()) {
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.noContent().build();
         }
+
         var consultationResources = consultations.stream()
                 .map(ConsultationResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
+
         return ResponseEntity.ok(consultationResources);
     }
+
 }
